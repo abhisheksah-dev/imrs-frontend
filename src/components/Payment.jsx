@@ -239,7 +239,7 @@ const Payment = () => {
       const config = {
         method: "post",
         maxBodyLength: Infinity,
-        url: "http://localhost:3000/orders",
+        url: "https://imrs-backend-1nfp.onrender.com/orders",
         headers: { "Content-Type": "application/json" },
         data: data,
       };
@@ -283,7 +283,7 @@ const Payment = () => {
   // Function to fetch payment details using the entered Payment ID.
   const handlePaymentFetch = () => {
     axios
-      .get(`http://localhost:3000/payment/${paymentId}`)
+      .get(`https://imrs-backend-1nfp.onrender.com/payment/${paymentId}`)
       .then((response) => {
         console.log(response.data);
         setResponseState(response.data);

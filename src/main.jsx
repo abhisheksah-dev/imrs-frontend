@@ -9,7 +9,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 createRoot(document.getElementById("root")).render(
   <Auth0Provider
     domain="dev-4od4l0gm75ujpvq8.us.auth0.com"
-    clientId="fDW86ss2WURb7a5gPQ6gs6qTMxDH4FQ5"
+    clientId="XamEVZDw96GZVkNjmTAjPygv2xi84lmd"
     authorizationParams={{
       redirect_uri: window.location.origin,
     }}
