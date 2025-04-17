@@ -385,29 +385,7 @@ const Payment = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
-          <div>
-            <label htmlFor="ticketType" className="block font-semibold mb-1">
-              Ticket Type
-            </label>
-            <select
-              id="ticketType"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="single">Single Journey</option>
-              <option value="return">Return Journey</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="ticketsCount" className="block font-semibold mb-1">
-              Number of Tickets
-            </label>
-            <input
-              type="number"
-              id="ticketsCount"
-              placeholder="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+
           <div>
             <label htmlFor="totalFare" className="block font-semibold mb-1">
               Total Fare
