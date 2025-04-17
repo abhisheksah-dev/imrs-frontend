@@ -25,6 +25,9 @@ function Services() {
   const handleLogHelpline = () => {
     navigate("/helplinesection");
   };
+  const handleLogTrip = () => {
+    navigate("/trip");
+  };
 
   return (
     <>
@@ -76,6 +79,12 @@ function Services() {
             onClick={handleLogHelpline}
           >
             SECURITY
+          </button>
+          <button
+            className="bg-gradient-to-br from-[#e9d5ff] to-[#c084fc] border-4 border-purple-500 text-purple-800 font-semibold text-2xl py-4 rounded-lg shadow-md hover:bg-gradient-to-r hover:from-blue-300 hover:to-blue-400"
+            onClick={handleLogTrip}
+          >
+            Trip
           </button>
         </div>
       </main>
