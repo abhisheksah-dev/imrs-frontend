@@ -84,21 +84,13 @@ function AboutUs() {
                           alt: "Audio Indication",
                           title: "Audio Navigator",
                         },
-                        {
-                          img: "/images/onlineticket.png",
-                          alt: "Online Ticket Booking",
-                          title: "Online Ticket Booking",
-                        },
+
                         {
                           img: "/images/stationinformation.png",
                           alt: "Station Information",
                           title: "Station Information",
                         },
-                        {
-                          img: "/images/trip.png",
-                          alt: "Station Information",
-                          title: "Trip Planner",
-                        },
+
                         {
                           img: "/images/smartcard.png",
                           alt: "Station Information",
