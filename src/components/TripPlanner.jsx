@@ -1,37 +1,34 @@
-import React, { useState } from "react";
-import { FaSearchLocation } from "react-icons/fa";
+import React, { useState, useMemo } from 'react';
 
-// Station Node Class
+// Data structures for metro route
 class StationNode {
-  constructor(name, distancePrev, distanceNext) {
+  constructor(name, distancePrev, distanceNext, trip) {
     this.name = name;
     this.distancePrev = distancePrev;
     this.distanceNext = distanceNext;
     this.prev = null;
     this.next = null;
+    this.trip = trip || [];
   }
 }
 
-// Circular Linked List Class
 class CircularLinkedList {
   constructor() {
     this.head = null;
     this.tail = null;
   }
 
-  insertFirst(name, distancePrev, distanceNext) {
-    const newNode = new StationNode(name, distancePrev, distanceNext);
+  insertFirst(name, distancePrev, distanceNext, trip) {
+    const newNode = new StationNode(name, distancePrev, distanceNext, trip);
     this.head = newNode;
     this.tail = newNode;
-    newNode.next = newNode;
-    newNode.prev = newNode;
   }
 
-  insertEnd(name, distancePrev, distanceNext) {
+  insertEnd(name, distancePrev, distanceNext, trip) {
     if (!this.head) {
-      this.insertFirst(name, distancePrev, distanceNext);
+      this.insertFirst(name, distancePrev, distanceNext, trip);
     } else {
-      const newNode = new StationNode(name, distancePrev, distanceNext);
+      const newNode = new StationNode(name, distancePrev, distanceNext, trip);
       this.tail.next = newNode;
       newNode.prev = this.tail;
       newNode.next = this.head;
@@ -40,216 +37,190 @@ class CircularLinkedList {
     }
   }
 
-  calculateDistance(from, to) {
+  // Return list of { station, trips } between start and end
+  getTripDetails(startStation, endStation) {
+    const results = [];
     let current = this.head;
-    let found = false;
-    let forwardDistance = 0;
-    let backwardDistance = 0;
 
-    // FORWARD TRAVERSAL
-    while (current.name !== from && current.next !== this.head) {
+    // Find start node
+    while (current.name !== startStation) {
       current = current.next;
+      if (!current) return results;
     }
-    if (current.name === from) {
-      found = true;
-      let forwardPointer = current;
-      while (forwardPointer.name !== to) {
-        forwardDistance += forwardPointer.distanceNext;
-        forwardPointer = forwardPointer.next;
-      }
-    }
+    const startNode = current;
 
-    // BACKWARD TRAVERSAL
+    // Find end node
     current = this.head;
-    while (current.name !== from && current.next !== this.head) {
+    while (current.name !== endStation) {
       current = current.next;
+      if (!current) return results;
     }
-    if (current.name === from) {
-      let backwardPointer = current;
-      while (backwardPointer.name !== to) {
-        backwardDistance += backwardPointer.distancePrev;
-        backwardPointer = backwardPointer.prev;
+    const endNode = current;
+
+    // Count forward vs backward
+    let forward = startNode;
+    let backward = startNode;
+    let fcount = 0;
+    let bcount = 0;
+    while (forward !== endNode) { fcount++; forward = forward.next; }
+    while (backward !== endNode) { bcount++; backward = backward.prev; }
+
+    // Traverse in shorter direction
+    if (fcount <= bcount) {
+      current = startNode;
+      while (current !== endNode) {
+        if (current.trip.length) results.push({ station: current.name, trips: current.trip });
+        current = current.next;
+      }
+    } else {
+      current = startNode;
+      while (current !== endNode) {
+        if (current.trip.length) results.push({ station: current.name, trips: current.trip });
+        current = current.prev;
       }
     }
 
-    if (!found) return null;
-    return {
-      shortestDistance: Math.min(forwardDistance, backwardDistance),
-      direction:
-        forwardDistance <= backwardDistance ? "Forward" : "Backward",
-    };
+    // Include end station
+    if (endNode.trip.length) results.push({ station: endNode.name, trips: endNode.trip });
+    return results;
   }
 }
 
-// Initialize metroRoute
-const metroRoute = new CircularLinkedList();
-metroRoute.insertFirst("Super Corridor 1", 1000, 1500);
-metroRoute.insertEnd("Super Corridor 2", 1500, 1000);
-metroRoute.insertEnd("Super Corridor 3", 1000, 1250);
-metroRoute.insertEnd("Super Corridor 4", 1250, 1250);
-metroRoute.insertEnd("Super Corridor 5", 1250, 990);
-metroRoute.insertEnd("Super Corridor 6", 990, 650);
-metroRoute.insertEnd("Gandhi Nagar/Nanod", 650, 1400);
-metroRoute.insertEnd("Airport", 1400, 1620);
-metroRoute.insertEnd("BSF/ Kalani Nagar", 1620, 1140);
-metroRoute.insertEnd("Ramchandra Nagar Square", 1140, 875);
-metroRoute.insertEnd("Bada Ganpati", 875, 600);
-metroRoute.insertEnd("Chota Ganpati", 600, 900);
-metroRoute.insertEnd("Rajwada Palace", 900, 1170);
-metroRoute.insertEnd("Indore Railway Station", 1170, 650);
-metroRoute.insertEnd("High Court", 650, 1200);
-metroRoute.insertEnd("Palasia Square", 1200, 900);
-metroRoute.insertEnd("Patrakar Colony", 900, 1200);
-metroRoute.insertEnd("Bengali Square", 1200, 1400);
-metroRoute.insertEnd("Khajrana Square", 1400, 1000);
-metroRoute.insertEnd("Mumtaj Bag Colony", 1000, 800);
-metroRoute.insertEnd("Radisson Square", 800, 1150);
-metroRoute.insertEnd("Vijay Nagar Square", 1150, 620);
-metroRoute.insertEnd("Meghdoot Garden", 620, 860);
-metroRoute.insertEnd("Bapat Square", 860, 780);
-metroRoute.insertEnd("Hira Nagar", 780, 850);
-metroRoute.insertEnd("Chandragupta Square", 850, 780);
-metroRoute.insertEnd("ISBT/ MR 10 Flyover", 780, 1760);
-metroRoute.insertEnd("MR 10 Road", 1760, 1250);
-metroRoute.insertEnd("Bhawarshala Square", 1250, 1000);
+const TripPlanner = () => {
+  // Initialize metro route once
+  const metroRoute = useMemo(() => {
+    const list = new CircularLinkedList();
+    list.insertFirst("Super Corridor 1", 1000, 1500, []);
+    list.insertEnd("Super Corridor 2", 1500, 1000, []);
+    list.insertEnd("Super Corridor 3", 1000, 1250, []);
+    list.insertEnd("Super Corridor 4", 1250, 1250, []);
+    list.insertEnd("Super Corridor 5", 1250, 990, []);
+    list.insertEnd("Super Corridor 6", 990, 650, []);
+    list.insertEnd("Gandhi Nagar/Nanod", 650, 1400, []);
+    list.insertEnd("Airport", 1400, 1620, ["Shree Bijasan Mata Mandir", "Airport"]);
+    list.insertEnd("BSF/ Kalani Nagar", 1620, 1140, ["Aanandam Adventure Park"]);
+    list.insertEnd("Ramchandra Nagar Square", 1140, 875, []);
+    list.insertEnd("Bada Ganpati", 875, 600, ["Bada Ganpati Mandir", "Shree Ranjeet Hanuman Dham"]);
+    list.insertEnd("Chota Ganpati", 600, 900, ["Chota Ganpati Mandir", "Lal Bagh Palace", "Shri Annapurna Temple"]);
+    list.insertEnd("Rajwada Palace", 900, 1170, ["Rajwada Palace", "Khazuri Bazaar", "Novelty Market", "Regional Park"]);
+    list.insertEnd("Indore Railway Station", 1170, 650, ["Railway Station", "Sarwate Bus Stand"]);
+    list.insertEnd("High Court/ Hotel Residency", 650, 1200, ["Kamla Nehru Zoo", "Navlakha Bus Stand"]);
+    list.insertEnd("Palasia Square", 1200, 900, ["I-Bus Station", "56-Dukaan Chaupati"]);
+    list.insertEnd("Patrakar Colony", 900, 1200, []);
+    list.insertEnd("Bengali Square", 1200, 1400, []);
+    list.insertEnd("Khajrana Square", 1400, 1000, ["Khazrana Ganesh Mandir"]);
+    list.insertEnd("Mumtaj Bag Colony", 1000, 800, []);
+    list.insertEnd("Radisson Square", 800, 1150, ["Divya Shakti Peeth Mandir"]);
+    list.insertEnd("Vijay Nagar Square", 1150, 620, ["Kalka Mata Mandir"]);
+    list.insertEnd("Meghdoot Garden", 620, 860, ["Meghdoot Garden"]);
+    list.insertEnd("Bapat Square", 860, 780, []);
+    list.insertEnd("Hira Nagar", 780, 850, []);
+    list.insertEnd("Chandragupta Square", 850, 780, []);
+    list.insertEnd("ISBT/ MR 10 Flyover", 780, 1760, []);
+    list.insertEnd("MR 10 Road", 1760, 1250, []);
+    list.insertEnd("Bhawarshala Square", 1250, 1000, []);
+    return list;
+  }, []);
 
-function NearestStation() {
-  const [fromStation, setFromStation] = useState("");
-  const [toStation, setToStation] = useState("");
-  const [distanceInfo, setDistanceInfo] = useState(null);
+  // Extract station names
+  const stationNames = useMemo(() => {
+    const names = [];
+    if (!metroRoute.head) return names;
+    let current = metroRoute.head;
+    do {
+      names.push(current.name);
+      current = current.next;
+    } while (current !== metroRoute.head && current);
+    return names;
+  }, [metroRoute]);
 
-  const handleCalculateDistance = () => {
-    if (fromStation && toStation) {
-      if (fromStation === toStation) {
-        alert("Source and destination stations cannot be the same.");
-        return;
-      }
-      const info = metroRoute.calculateDistance(fromStation, toStation);
-      if (info) {
-        setDistanceInfo(info);
-      } else {
-        alert("Stations not found in route.");
-      }
-    } else {
-      alert("Please select both source and destination stations.");
-    }
+  const [startStation, setStartStation] = useState('');
+  const [endStation, setEndStation] = useState('');
+  const [tripResults, setTripResults] = useState([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setHasSubmitted(true);
+    if (!startStation || !endStation || startStation === endStation) return;
+    setTripResults(metroRoute.getTripDetails(startStation, endStation));
   };
 
-  const stations = [
-    "Super Corridor 1",
-    "Super Corridor 2",
-    "Super Corridor 3",
-    "Super Corridor 4",
-    "Super Corridor 5",
-    "Super Corridor 6",
-    "Gandhi Nagar/Nanod",
-    "Airport",
-    "BSF/ Kalani Nagar",
-    "Ramchandra Nagar Square",
-    "Bada Ganpati",
-    "Chota Ganpati",
-    "Rajwada Palace",
-    "Indore Railway Station",
-    "High Court",
-    "Palasia Square",
-    "Patrakar Colony",
-    "Bengali Square",
-    "Khajrana Square",
-    "Mumtaj Bag Colony",
-    "Radisson Square",
-    "Vijay Nagar Square",
-    "Meghdoot Garden",
-    "Bapat Square",
-    "Hira Nagar",
-    "Chandragupta Square",
-    "ISBT/ MR 10 Flyover",
-    "MR 10 Road",
-    "Bhawarshala Square",
-  ];
-
   return (
-    <>
-      <div className="bg-white flex justify-center p-6 font-sans mb-7">
-        <div className="shadow-lg rounded-lg p-8 max-w-3xl w-full">
-          <h2 className="bg-blue-900 text-center text-3xl font-bold text-white mb-8 uppercase h-12 rounded-xl">
-            <p className="pt-2">Trip Planner</p>
-          </h2>
+    <div className="max-w-3xl mx-auto mt-8 shadow-lg rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="bg-blue-800 p-4">
+        <h1 className="text-white text-center text-2xl font-bold uppercase">Trip planner</h1>
+      </div>
 
-          <div className="bg-blue-100 p-6 rounded-lg mb-8">
-            <div className="mb-4">
-              <label className="block text-blue-900 font-semibold mb-2">
-                <div className="flex items-center space-x-2">
-                  <FaSearchLocation className="text-blue-900" />
-                  <span>From</span>
-                </div>
-              </label>
-              <select
-                value={fromStation}
-                onChange={(e) => setFromStation(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-blue-300"
-              >
-                <option value="">Enter your source station</option>
-                {stations.map((stationName) => (
-                  <option key={stationName} value={stationName}>
-                    {stationName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-blue-900 font-semibold mb-2">
-                <div className="flex items-center space-x-2">
-                  <FaSearchLocation className="text-blue-900" />
-                  <span>To</span>
-                </div>
-              </label>
-              <select
-                value={toStation}
-                onChange={(e) => setToStation(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-blue-300"
-              >
-                <option value="">Enter your destination station</option>
-                {stations.map((stationName) => (
-                  <option key={stationName} value={stationName}>
-                    {stationName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={handleCalculateDistance}
-                className="bg-blue-600 text-xl text-white py-3 px-16 rounded-lg font-semibold hover:bg-blue-800 transition"
-              >
-                Search
-              </button>
-            </div>
+      {/* Input Section */}
+      <div className="bg-blue-100 p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block mb-2 font-semibold text-blue-700">From</label>
+            <select
+              value={startStation}
+              onChange={(e) => setStartStation(e.target.value)}
+              className="w-full p-3 rounded-lg border border-blue-300"
+            >
+              <option value="">Select Station</option>
+              {stationNames.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
           </div>
 
-          {distanceInfo && (
-            <div className="bg-[#D3D5FF] rounded-lg shadow-lg p-8 text-center mt-10">
-              <div className="text-gray-700 text-xl font-semibold">
-                Distance: {distanceInfo.shortestDistance} meters
-              </div>
-              <div className="text-gray-500 text-md mt-2">
-                Direction: {distanceInfo.direction}
-              </div>
+          <div>
+            <label className="block mb-2 font-semibold text-blue-700">To</label>
+            <select
+              value={endStation}
+              onChange={(e) => setEndStation(e.target.value)}
+              className="w-full p-3 rounded-lg border border-blue-300"
+            >
+              <option value="">Select Station</option>
+              {stationNames.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="text-center">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-8 rounded-lg"
+            >
+              plan trip
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Results Section */}
+      <div className="bg-white p-6">
+        {hasSubmitted && tripResults.length === 0 && (
+          <p className="text-center text-gray-600">No tourist places found for the selected route.</p>
+        )}
+
+        {tripResults.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4 text-center">Places to Visit</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {tripResults.map(({ station, trips }) => (
+                <div key={station} className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <h3 className="font-bold mb-2 text-blue-800">{station}</h3>
+                  <ul className="list-disc list-inside text-gray-700">
+                    {trips.map((place) => (
+                      <li key={place}>{place}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
-
-      <div className="w-full">
-        <img
-          src="/images/trainoriginal.png"
-          alt="Train Image"
-          className="w-full h-auto object-cover"
-        />
-      </div>
-    </>
+    </div>
   );
-}
+};
 
-export default NearestStation;
+export default TripPlanner;

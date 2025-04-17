@@ -13,8 +13,41 @@ function Header({ setLoading }) {
     }, 3000);
   };
 
+  // Emergency alert handler
+  const handleEmergency = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported in this browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const { latitude, longitude } = coords;
+        // Send location to backend for alert
+        fetch("/api/emergency-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ latitude, longitude }),
+        }).catch(() => {});
+        // Call nearby police
+        window.location.href = "tel:100";
+      },
+      () => {
+        alert("Please allow location access to send emergency alert.");
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
   return (
-    <div className="flex justify-between items-center bg-gradient-to-r from-[#48CAE4] to-[#0077B6] h-[90px] font-sans">
+    <div className="relative flex justify-between items-center bg-gradient-to-r from-[#48CAE4] to-[#0077B6] h-[90px] font-sans">
+      {/* Emergency Help button centered */}
+      <button
+        onClick={handleEmergency}
+        className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
+      >
+        Emergency Help
+      </button>
+
       <div>
         <img
           className="w-[100px] bg-inherit"
@@ -27,7 +60,7 @@ function Header({ setLoading }) {
         {isAuthenticated ? (
           <button
             type="button"
-            className="btn btn-warning hover:bg-gradient-to-r hover:from-pink-500 hover:to-yellow-500 shadow-[0_0px_50px_rgba(59,130,246,0.6)] cursor-grab "
+            className="btn btn-warning hover:bg-gradient-to-r hover:from-pink-500 hover:to-yellow-500 shadow-[0_0px_50px_rgba(59,130,246,0.6)] cursor-grab"
             onClick={() =>
               logout({ logoutParams: { returnTo: window.location.origin } })
             }
@@ -37,7 +70,7 @@ function Header({ setLoading }) {
         ) : (
           <button
             type="button"
-            className="btn btn-warning hover:bg-gradient-to-r hover:from-pink-500 hover:to-yellow-500 shadow-[0_0px_50px_rgba(59,130,246,0.6)] cursor-grab font-sans "
+            className="btn btn-warning hover:bg-gradient-to-r hover:from-pink-500 hover:to-yellow-500 shadow-[0_0px_50px_rgba(59,130,246,0.6)] cursor-grab font-sans"
             onClick={() => {
               handleLogInClick();
               loginWithRedirect();
