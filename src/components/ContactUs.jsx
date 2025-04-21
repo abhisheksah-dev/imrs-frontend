@@ -75,7 +75,7 @@ const ContactUs = () => {
                 <p className="text-gray-700 text-lg">
                   <a
                     className="text-black no-underline"
-                    href="https://www.imrs_indore.in"
+                    href="https://indoremetrorailsaathi.netlify.app/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
