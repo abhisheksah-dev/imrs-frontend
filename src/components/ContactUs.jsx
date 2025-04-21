@@ -79,7 +79,7 @@ const ContactUs = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    www.imrs_indore.in
+                    https://indoremetrorailsaathi.netlify.app/
                   </a>
                 </p>
               </div>
